@@ -1,6 +1,8 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
+:root {
   /* Brand palette — dark neon exchange aesthetic */
   --color-bg: #08080e;
   --color-surface: #101018;
@@ -10,9 +12,9 @@
   --color-border-2: #3a3a55;
 
   --color-neon-green: #00e87a;
-  --color-neon-green-dim: #00e87a33;
+  --color-neon-green-dim: #00e87a22;
   --color-neon-red: #ff3366;
-  --color-neon-red-dim: #ff336633;
+  --color-neon-red-dim: #ff336622;
   --color-neon-blue: #00aaff;
   --color-neon-yellow: #ffd700;
 
@@ -20,7 +22,6 @@
   --color-text-secondary: #9090b0;
   --color-text-muted: #505070;
 
-  /* Typography */
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-display: 'Space Grotesk', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
