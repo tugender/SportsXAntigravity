@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:sport-stocks--matthewtugender.replit.app)"
+    ]
+  }
+}

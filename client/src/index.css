@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand palette — dark neon exchange aesthetic */
+  --color-bg: #08080e;
+  --color-surface: #101018;
+  --color-surface-2: #181825;
+  --color-surface-3: #222235;
+  --color-border: #2a2a40;
+  --color-border-2: #3a3a55;
+
+  --color-neon-green: #00e87a;
+  --color-neon-green-dim: #00e87a33;
+  --color-neon-red: #ff3366;
+  --color-neon-red-dim: #ff336633;
+  --color-neon-blue: #00aaff;
+  --color-neon-yellow: #ffd700;
+
+  --color-text-primary: #e8e8f4;
+  --color-text-secondary: #9090b0;
+  --color-text-muted: #505070;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrolling ticker animation */
+@keyframes ticker-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Price flash animations */
+@keyframes flash-green {
+  0%, 100% { background-color: transparent; }
+  50%       { background-color: var(--color-neon-green-dim); }
+}
+
+@keyframes flash-red {
+  0%, 100% { background-color: transparent; }
+  50%       { background-color: var(--color-neon-red-dim); }
+}
+
+.flash-up   { animation: flash-green 0.6s ease; }
+.flash-down { animation: flash-red 0.6s ease; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--color-surface); }
+::-webkit-scrollbar-thumb { background: var(--color-border-2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }

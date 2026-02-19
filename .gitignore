@@ -1,0 +1,7 @@
+node_modules/
+server/src/persistence/users.json
+server/src/persistence/priceHistory.json
+server/.env
+client/dist/
+.DS_Store
+*.log
