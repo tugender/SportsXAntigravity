@@ -122,6 +122,8 @@ export function buildSimulatedSnapshot() {
         price,
         previousPrice: price,
         openPrice: price,
+        fairValue: price,  // baseline fair value; price drifts away via noise
+        ev: 0,
         change: 0,
         changePct: 0,
         impliedProbability: americanToImpliedProb(odds),

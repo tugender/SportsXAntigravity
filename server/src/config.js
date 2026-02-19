@@ -4,6 +4,7 @@ export const config = {
   PORT: process.env.PORT || 3001,
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   ODDS_API_KEY: process.env.ODDS_API_KEY || null,
+  CLAUDE_API_KEY: process.env.CLAUDE_API_KEY || null,
   ODDS_API_BASE: 'https://api.the-odds-api.com/v4',
   ODDS_POLL_INTERVAL_MS: 60 * 60 * 1000,       // 1 hour (keeps usage ~2,160 req/month on free tier)
   PRICE_BROADCAST_INTERVAL_MS: 3000,            // 3 seconds

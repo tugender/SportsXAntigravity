@@ -2,7 +2,6 @@ import { useNavigate } from 'react-router-dom';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import { useUiStore } from '../../stores/uiStore.js';
 import { useUserStore } from '../../stores/userStore.js';
-import { clsx } from 'clsx';
 
 export function StockCard({ stock }) {
   const navigate = useNavigate();
@@ -71,6 +70,17 @@ export function StockCard({ stock }) {
             {isUp ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
             {isUp ? '+' : ''}{stock.changePct?.toFixed(2)}%
           </div>
+          {stock.ev != null && (
+            <div
+              className="text-xs font-semibold mt-0.5"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: stock.ev >= 0 ? 'var(--color-neon-green)' : 'var(--color-neon-red)',
+              }}
+            >
+              {stock.ev >= 0 ? '+' : ''}EV ${stock.ev.toFixed(2)}
+            </div>
+          )}
         </div>
       </div>
 

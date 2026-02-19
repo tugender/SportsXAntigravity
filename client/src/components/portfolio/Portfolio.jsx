@@ -1,4 +1,5 @@
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { useState } from 'react';
+import { TrendingUp, TrendingDown, BrainCircuit, Loader } from 'lucide-react';
 import { useUiStore } from '../../stores/uiStore.js';
 import { useUserStore } from '../../stores/userStore.js';
 import { usePnl } from '../../hooks/usePnl.js';
@@ -18,8 +19,32 @@ function PnlBadge({ value }) {
 
 export function Portfolio() {
   const openTradeModal = useUiStore((s) => s.openTradeModal);
+  const username = useUserStore((s) => s.username);
   const cashBalance = useUserStore((s) => s.cashBalance);
   const { enrichedPositions, positionsValue, totalPortfolioValue, totalUnrealizedPnl, realizedPnl } = usePnl();
+
+  const [review, setReview] = useState(null);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState(null);
+
+  async function fetchReview() {
+    setReviewLoading(true);
+    setReviewError(null);
+    try {
+      const res = await fetch('/api/ai/portfolio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setReview(data.review);
+    } catch (err) {
+      setReviewError(err.message);
+    } finally {
+      setReviewLoading(false);
+    }
+  }
 
   const positions = Object.values(enrichedPositions);
   const hasPositions = positions.length > 0;
@@ -61,6 +86,60 @@ export function Portfolio() {
           </div>
         ))}
       </div>
+
+      {/* AI Portfolio Review */}
+      {hasPositions && (
+        <div
+          className="rounded-xl p-4 mb-6"
+          style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+              <BrainCircuit size={13} />
+              AI Portfolio Review
+            </div>
+            {!review && (
+              <button
+                onClick={fetchReview}
+                disabled={reviewLoading}
+                className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90 disabled:opacity-50"
+                style={{
+                  backgroundColor: 'var(--color-neon-blue)20',
+                  color: 'var(--color-neon-blue)',
+                  border: '1px solid var(--color-neon-blue)40',
+                }}
+              >
+                {reviewLoading ? <Loader size={11} className="animate-spin" /> : <BrainCircuit size={11} />}
+                {reviewLoading ? 'Analysing...' : 'Review My Portfolio'}
+              </button>
+            )}
+            {review && (
+              <button
+                onClick={() => { setReview(null); setReviewError(null); }}
+                className="text-xs"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
+                Refresh
+              </button>
+            )}
+          </div>
+
+          {!review && !reviewLoading && !reviewError && (
+            <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              Get an AI analysis of your positions, EV scores, and portfolio risk.
+            </div>
+          )}
+          {reviewLoading && (
+            <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Generating analysis...</div>
+          )}
+          {reviewError && (
+            <div className="text-xs" style={{ color: 'var(--color-neon-red)' }}>{reviewError}</div>
+          )}
+          {review && (
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>{review}</p>
+          )}
+        </div>
+      )}
 
       {/* Positions table */}
       <div

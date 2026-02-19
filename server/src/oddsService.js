@@ -5,22 +5,29 @@ import { updateStocksFromOdds, setApiRequestsRemaining } from './marketCache.js'
 let quotaExhausted = false;
 
 function extractBestOddsPerTeam(bookmakers) {
-  const teamOddsMap = {};
+  const teamData = {};
 
   for (const bm of bookmakers) {
     for (const market of bm.markets) {
       if (market.key !== 'outrights') continue;
       for (const outcome of market.outcomes) {
-        if (!teamOddsMap[outcome.name]) teamOddsMap[outcome.name] = [];
-        teamOddsMap[outcome.name].push(outcome.price);
+        if (!teamData[outcome.name]) teamData[outcome.name] = { odds: [], probs: [] };
+        teamData[outcome.name].odds.push(outcome.price);
+        teamData[outcome.name].probs.push(americanToImpliedProb(outcome.price));
       }
     }
   }
 
-  // Average odds across all bookmakers for each team
-  return Object.entries(teamOddsMap).map(([team, oddsArr]) => {
-    const avgOdds = oddsArr.reduce((sum, o) => sum + o, 0) / oddsArr.length;
-    return { team, odds: Math.round(avgOdds) };
+  // Average odds and implied probs across all bookmakers for each team
+  // fairValue = consensus implied prob × 100 (before our noise function touches it)
+  return Object.entries(teamData).map(([team, { odds, probs }]) => {
+    const avgOdds = odds.reduce((sum, o) => sum + o, 0) / odds.length;
+    const avgProb = probs.reduce((sum, p) => sum + p, 0) / probs.length;
+    return {
+      team,
+      odds: Math.round(avgOdds),
+      fairValue: Math.round(avgProb * 10000) / 100,
+    };
   });
 }
 
@@ -55,12 +62,14 @@ async function fetchSportFutures(sportKey, sport) {
   const event = data[0];
   const teamsOdds = extractBestOddsPerTeam(event.bookmakers || []);
 
-  return teamsOdds.map(({ team, odds }) => ({
+  return teamsOdds.map(({ team, odds, fairValue }) => ({
     ticker: teamToTicker(team),
     team,
     sport,
     odds,
     price: oddsToPrice(odds),
+    fairValue,
+    ev: Math.round((fairValue - oddsToPrice(odds)) * 100) / 100,
     impliedProbability: americanToImpliedProb(odds),
     isSimulated: false,
   }));

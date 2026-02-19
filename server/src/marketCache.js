@@ -2,7 +2,7 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { buildSimulatedSnapshot, addNoise } from './simulatedData.js';
-import { config, oddsToPrice } from './config.js';
+import { config } from './config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PERSIST_PATH = join(__dirname, 'persistence', 'users.json');
@@ -68,12 +68,17 @@ export function tickPrices() {
     const prevPrice = stock.price;
     const changePct = ((newPrice - stock.openPrice) / stock.openPrice) * 100;
 
+    const newEv = stock.fairValue != null
+      ? Math.round((stock.fairValue - newPrice) * 100) / 100
+      : 0;
+
     state.stocks[ticker] = {
       ...stock,
       previousPrice: prevPrice,
       price: newPrice,
       change: newPrice - stock.openPrice,
       changePct: Math.round(changePct * 100) / 100,
+      ev: newEv,
       volume: stock.volume + Math.floor(Math.random() * 3),
       lastUpdated: now,
     };

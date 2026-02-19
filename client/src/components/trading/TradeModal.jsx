@@ -31,6 +31,16 @@ export function TradeModal() {
   const totalCost = Math.round(shares * stock.price * 100) / 100;
   const maxBuyShares = Math.floor(cashBalance / Math.max(stock.price, 0.01));
   const maxSellShares = currentPosition?.shares || 0;
+
+  // Kelly Criterion: f* = (fairValue - price) / (100 - price)
+  // Kelly shares = f* × (cashBalance / price), floored and capped at maxBuy
+  const kellyShares = (() => {
+    const fv = stock.fairValue;
+    const p = stock.price;
+    if (!fv || p >= 100 || fv <= p) return 0;
+    const fraction = (fv - p) / (100 - p);
+    return Math.min(Math.floor(fraction * cashBalance / p), maxBuyShares);
+  })();
   const canTrade =
     tradeSide === 'buy' ? totalCost <= cashBalance && shares > 0
     : shares > 0 && shares <= maxSellShares;
@@ -212,13 +222,24 @@ export function TradeModal() {
             </div>
             {/* Max buttons */}
             {tradeSide === 'buy' && maxBuyShares > 0 && (
-              <button
-                className="text-xs mt-1.5"
-                style={{ color: 'var(--color-neon-green)' }}
-                onClick={() => setShares(maxBuyShares)}
-              >
-                Max: {maxBuyShares} shares
-              </button>
+              <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                <button
+                  className="text-xs"
+                  style={{ color: 'var(--color-neon-green)' }}
+                  onClick={() => setShares(maxBuyShares)}
+                >
+                  Max: {maxBuyShares} shares
+                </button>
+                {kellyShares > 0 && (
+                  <button
+                    className="text-xs"
+                    style={{ color: 'var(--color-neon-blue)' }}
+                    onClick={() => setShares(kellyShares)}
+                  >
+                    Kelly: {kellyShares} shares
+                  </button>
+                )}
+              </div>
             )}
             {tradeSide === 'sell' && maxSellShares > 0 && (
               <button

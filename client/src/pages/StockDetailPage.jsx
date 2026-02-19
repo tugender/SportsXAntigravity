@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, TrendingDown } from 'lucide-react';
+import { ArrowLeft, TrendingUp, TrendingDown, BrainCircuit, Loader } from 'lucide-react';
 import { useMarketStore } from '../stores/marketStore.js';
 import { useUiStore } from '../stores/uiStore.js';
 import { useUserStore } from '../stores/userStore.js';
@@ -21,6 +22,25 @@ export function StockDetailPage() {
         </div>
       </div>
     );
+  }
+
+  const [briefing, setBriefing] = useState(null);
+  const [briefingLoading, setBriefingLoading] = useState(false);
+  const [briefingError, setBriefingError] = useState(null);
+
+  async function fetchBriefing() {
+    setBriefingLoading(true);
+    setBriefingError(null);
+    try {
+      const res = await fetch(`/api/ai/analysis/${ticker}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setBriefing(data.briefing);
+    } catch (err) {
+      setBriefingError(err.message);
+    } finally {
+      setBriefingLoading(false);
+    }
   }
 
   const isUp = stock.changePct >= 0;
@@ -101,6 +121,36 @@ export function StockDetailPage() {
           ))}
         </div>
 
+        {/* Analytics row — Fair Value + EV */}
+        {stock.fairValue != null && (
+          <div
+            className="grid grid-cols-2 gap-3 mb-4 rounded-lg p-3"
+            style={{ backgroundColor: 'var(--color-surface-3)', border: '1px solid var(--color-border)' }}
+          >
+            <div>
+              <div className="text-xs mb-0.5" style={{ color: 'var(--color-text-muted)' }}>Fair Value (consensus)</div>
+              <div className="text-sm font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
+                ${stock.fairValue.toFixed(2)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs mb-0.5" style={{ color: 'var(--color-text-muted)' }}>Expected Value</div>
+              <div
+                className="text-sm font-bold"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  color: stock.ev >= 0 ? 'var(--color-neon-green)' : 'var(--color-neon-red)',
+                }}
+              >
+                {stock.ev >= 0 ? '+' : ''}${stock.ev.toFixed(2)}{' '}
+                <span className="text-xs font-normal">
+                  {stock.ev >= 0 ? '(undervalued)' : '(overvalued)'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Chart */}
         <PriceChart ticker={ticker} />
       </div>
@@ -139,6 +189,64 @@ export function StockDetailPage() {
           </div>
         </div>
       )}
+
+      {/* AI Briefing panel */}
+      <div
+        className="rounded-xl p-4 mb-4"
+        style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: 'var(--color-text-secondary)' }}>
+            <BrainCircuit size={13} />
+            AI Analyst
+          </div>
+          {!briefing && (
+            <button
+              onClick={fetchBriefing}
+              disabled={briefingLoading}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all hover:opacity-90 disabled:opacity-50"
+              style={{
+                backgroundColor: 'var(--color-neon-blue)20',
+                color: 'var(--color-neon-blue)',
+                border: '1px solid var(--color-neon-blue)40',
+              }}
+            >
+              {briefingLoading ? <Loader size={11} className="animate-spin" /> : <BrainCircuit size={11} />}
+              {briefingLoading ? 'Analysing...' : 'Generate Briefing'}
+            </button>
+          )}
+          {briefing && (
+            <button
+              onClick={() => { setBriefing(null); setBriefingError(null); }}
+              className="text-xs"
+              style={{ color: 'var(--color-text-muted)' }}
+            >
+              Refresh
+            </button>
+          )}
+        </div>
+
+        {!briefing && !briefingLoading && !briefingError && (
+          <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            Get an AI-generated market commentary on {stock.team}'s championship odds.
+          </div>
+        )}
+        {briefingLoading && (
+          <div className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+            Generating analysis...
+          </div>
+        )}
+        {briefingError && (
+          <div className="text-xs" style={{ color: 'var(--color-neon-red)' }}>
+            {briefingError}
+          </div>
+        )}
+        {briefing && (
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text-primary)' }}>
+            {briefing}
+          </p>
+        )}
+      </div>
 
       {/* Trade buttons */}
       <div className="grid grid-cols-2 gap-3">

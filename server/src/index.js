@@ -7,9 +7,11 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
 import { config } from './config.js';
-import { initializeMarket, loadPersistedData, startPersistence } from './marketCache.js';
+import { initializeMarket, loadPersistedData, startPersistence, getStock, getUser, getAllStocks } from './marketCache.js';
 import { startOddsPolling } from './oddsService.js';
 import { registerSocketHandlers } from './socketHandlers.js';
+import { getHistory } from './priceHistory.js';
+import { getStockBriefing, getPortfolioReview } from './aiService.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -37,6 +39,34 @@ app.get('/api/health', (_req, res) => {
     timestamp: Date.now(),
     mode: config.ODDS_API_KEY ? 'live' : 'simulated',
   });
+});
+
+// ─── AI endpoints ─────────────────────────────────────────────────────────────
+
+app.get('/api/ai/analysis/:ticker', async (req, res) => {
+  const ticker = req.params.ticker.toUpperCase();
+  const stock = getStock(ticker);
+  if (!stock) return res.status(404).json({ error: 'Ticker not found' });
+
+  const history = getHistory(ticker);
+  const briefing = await getStockBriefing(stock, history);
+  if (!briefing) return res.status(503).json({ error: 'AI not available — CLAUDE_API_KEY not set or API error' });
+
+  res.json({ ticker, briefing });
+});
+
+app.post('/api/ai/portfolio', async (req, res) => {
+  const { username } = req.body;
+  if (!username) return res.status(400).json({ error: 'username required' });
+
+  const user = getUser(username);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const stocksMap = Object.fromEntries(getAllStocks().map((s) => [s.ticker, s]));
+  const review = await getPortfolioReview(user, stocksMap);
+  if (!review) return res.status(503).json({ error: 'AI not available — CLAUDE_API_KEY not set or API error' });
+
+  res.json({ review });
 });
 
 // Serve built React client in production
