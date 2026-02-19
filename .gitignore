@@ -1,4 +1,6 @@
 node_modules/
+package-lock.json
+*/package-lock.json
 server/src/persistence/users.json
 server/src/persistence/priceHistory.json
 server/.env
